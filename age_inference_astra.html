@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>年齢の推理テーブル — Astra版</title>
+<style>
+:root{color-scheme:light dark;--background:light-dark(#fff,#181818);--foreground:light-dark(#242434,#eeeeef);--border:light-dark(#dadce6,#494951);--muted:light-dark(#f1f2f7,#292932);--destructive:light-dark(#b42336,#ff8b9b)}
+*{box-sizing:border-box}body{margin:0;padding:24px;background:var(--background);color:var(--foreground);font:16px/1.6 "Meiryo",system-ui,sans-serif}main{max-width:760px;margin:auto}h1{font-size:24px;font-weight:500;margin:0 0 12px}p{margin:0 0 18px}.viz-controls{display:flex;flex-wrap:wrap;gap:14px;margin:14px 0}.form-label{display:flex;flex-direction:column;gap:6px;flex:1 1 170px}input,select{font:inherit;color:inherit}.form-control,.form-select{background:var(--background);border:1px solid var(--border);border-radius:6px;padding:8px 10px;width:100%;min-width:0}.form-check{display:flex;gap:8px;align-items:center}.form-check-input{width:20px;height:20px}.table{width:100%;border-collapse:collapse;margin:20px 0}.table th,.table td{text-align:left;padding:10px 6px;border-bottom:1px solid var(--border);font-weight:400}.table td:nth-child(2){width:100px}.table th:first-child{width:60px}.tabular-nums{font-variant-numeric:tabular-nums}.form-range{display:block;width:100%;margin:14px 0}.text-small{font-size:14px}.text-destructive{color:var(--destructive)}summary{cursor:pointer}#fa-status{margin:16px 0}footer{margin-top:24px;font-size:14px}a{color:inherit}@media(max-width:420px){body{padding:14px}.table th,.table td{padding:8px 3px}.table td:nth-child(2){width:82px}}
+</style>
+</head>
+<body><main id="family-age-lab">
+<h1>年齢の推理テーブル — Astra版</h1>
+<p>娘の年齢を書き替えると「固定」になり、残りの娘の候補が連動して変わる。娘全員が合計に含まれると仮定して計算。</p>
+<div class="viz-controls">
+<label class="form-label">合計年齢<input class="form-control" id="fa-total" type="number" min="1" max="200" value="99"></label>
+<label class="form-label">父の年齢<input class="form-control" id="fa-father" type="number" min="1" max="100" value="50"></label>
+<label class="form-label">娘の人数<select class="form-select" id="fa-count"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option></select></label>
+</div>
+<details><summary>推論の条件</summary><div class="viz-controls">
+<label class="form-label">出生時の父：下限（概算）<input class="form-control" id="fa-min" type="number" min="0" max="100" value="18"></label>
+<label class="form-label">出生時の父：上限（概算）<input class="form-control" id="fa-max" type="number" min="0" max="100" value="50"></label>
+<label class="form-label">隣り合う姉妹の年齢差：最小<input class="form-control" id="fa-gapmin" type="number" min="0" max="99" value="0"></label>
+<label class="form-label">隣り合う姉妹の年齢差：最大<input class="form-control" id="fa-gapmax" type="number" min="0" max="99" value="10"></label>
+</div></details>
+<table class="table tabular-nums"><thead><tr><th>娘</th><th>年齢（歳）</th><th>固定</th><th>出生時の父<br>（概算）</th></tr></thead><tbody id="fa-rows"></tbody></table>
+<div id="fa-status" aria-live="polite"></div>
+<label class="form-label" id="fa-pick-label" for="fa-pick">成立パターン</label>
+<input class="form-range" id="fa-pick" type="range" min="0" max="0" value="0">
+<div id="fa-ranges" class="text-small"></div>
+<footer>初期条件は仮置き。パターンの順番は確率・自然さの評価ではない。出生時の父の年齢は現在の年齢差による概算（誕生日の前後で約1歳の差）。</footer>
+</main>
+<script>
+(() => {
+ const root=document.getElementById('family-age-lab');
+ const q=id=>root.querySelector('#fa-'+id);
+ let ages=[16,14,11,8],locked=[false,false,false,true],solutions=[];
+ const names=['長女','次女','三女','四女','五女'];
+ const num=id=>Number(q(id).value);
+ function rows(){
+  q('rows').innerHTML=ages.map((a,i)=>'<tr><th scope="row">'+names[i]+'</th><td><input class="form-control" type="number" min="0" max="200" value="'+a+'" data-age="'+i+'" aria-label="'+names[i]+'の年齢"></td><td><label class="form-check"><input class="form-check-input" type="checkbox" data-lock="'+i+'" '+(locked[i]?'checked':'')+'><span>固定</span></label></td><td data-birth="'+i+'"></td></tr>').join('');
+ }
+ function show(){
+  const s=solutions[Number(q('pick').value)];
+  if(s) ages=s.slice();
+  ages.forEach((a,i)=>{
+   root.querySelector('[data-age="'+i+'"]').value=Number.isFinite(a)?a:'';
+   root.querySelector('[data-birth="'+i+'"]').textContent=s?(num('father')-a)+'歳':'—';
+  });
+  q('status').textContent=s?solutions.length.toLocaleString()+'通り成立 ／ 娘の合計 '+ages.reduce((a,b)=>a+b,0)+'歳 ／ 父と合わせて '+num('total')+'歳':'この条件では成立する組み合わせがない';
+  q('status').className=s?'':'text-destructive';
+  q('pick-label').textContent=s?'成立パターン '+(Number(q('pick').value)+1)+' / '+solutions.length+'（年齢の開きが小さい順）':'成立パターン 0';
+ }
+ function solve(){
+  solutions=[];
+  const n=ages.length,f=num('father'),sum=num('total')-f,lo=Math.max(0,f-num('max')),hi=Math.min(sum,f-num('min')),g0=num('gapmin'),g1=num('gapmax');
+  const valid=['total','father','min','max','gapmin','gapmax'].every(id=>q(id).value!==''&&Number.isInteger(num(id))&&num(id)>=0)&&num('total')<=200&&f<=100&&g0<=g1&&num('min')<=num('max')&&ages.every(a=>Number.isInteger(a)&&a>=0&&a<=200);
+  function walk(arr,left){
+   const i=arr.length;if(i===n){if(left===0)solutions.push(arr);return;}
+   let lower=lo,upper=Math.min(hi,left);
+   if(i){lower=Math.max(lower,arr[i-1]-g1);upper=Math.min(upper,arr[i-1]-g0);}
+   if(locked[i]){lower=Math.max(lower,ages[i]);upper=Math.min(upper,ages[i]);}
+   for(let a=lower;a<=upper;a++){
+    const remain=n-i-1;
+    if(left-a<remain*lo||left-a>remain*a)continue;
+    walk([...arr,a],left-a);
+   }
+  }
+  if(valid&&sum>=0)walk([],sum);
+  solutions.sort((a,b)=>(a[0]-a[n-1])-(b[0]-b[n-1])||a.reduce((s,x,i)=>s+(i?Math.pow(a[i-1]-x,2):0),0)-b.reduce((s,x,i)=>s+(i?Math.pow(b[i-1]-x,2):0),0)||a.join(',').localeCompare(b.join(',')));
+  q('pick').max=Math.max(0,solutions.length-1);q('pick').value=0;q('pick').disabled=solutions.length<2;
+  q('ranges').textContent=solutions.length?'動ける範囲：'+ages.map((_,i)=>{let min=Infinity,max=-Infinity;for(const s of solutions){min=Math.min(min,s[i]);max=Math.max(max,s[i]);}return names[i]+' '+(min===max?min:min+'〜'+max)+'歳';}).join(' ／ '):'固定した年齢・人数・推論の条件を変更すると再計算';
+  show();
+ }
+ q('count').addEventListener('change',()=>{
+  const n=num('count'),oldLast=ages.length-1,lastAge=ages[oldLast],lastLock=locked[oldLast];
+  ages=Array.from({length:n},(_,i)=>i===n-1?lastAge:(ages[i]??lastAge));
+  locked=Array.from({length:n},(_,i)=>i===n-1?lastLock:(i<oldLast?locked[i]:false));
+  rows();solve();
+ });
+ ['total','father','min','max','gapmin','gapmax'].forEach(id=>q(id).addEventListener('input',solve));
+ q('rows').addEventListener('change',e=>{
+  if(e.target.hasAttribute('data-age')){const i=Number(e.target.dataset.age);ages[i]=e.target.value===''?NaN:Number(e.target.value);locked[i]=true;root.querySelector('[data-lock="'+i+'"]').checked=true;}
+  else if(e.target.hasAttribute('data-lock'))locked[Number(e.target.dataset.lock)]=e.target.checked;
+  else return;
+  solve();
+ });
+ q('pick').addEventListener('input',show);
+ rows();solve();
+})();
+</script>
+</body></html>
