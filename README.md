@@ -1,8 +1,10 @@
-## 年齢推定表（Opus5.5作成）
+## 年齢推定表（Opus5.5＋Astra作成）
 
 年齢をいれると、可動域での推定年齢がでます
 
 https://claude.ai/artifact/MYSgUZ3tYZsQbBmmRPHwQr
+
+https://family-age-table.mighty-eagle-3157.chatgpt.site/
 
 ※クイズ（X投稿）20261002
 
