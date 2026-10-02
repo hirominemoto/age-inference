@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>娘は何人？ 仮説の判定表</title>
+<style>
+:root{
+  --bg:#EEF2F4; --paper:#FFFFFF; --ink:#1E2A33; --sub:#5B6B77; --rule:#CCD6DD;
+  --band:#DCE8F3; --ok:#2C6CB0; --warn:#B4741A; --cut:#9AA6AF; --father:#1E2A33;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141A1F; --paper:#1C242B; --ink:#E4EAEE; --sub:#9AA8B3; --rule:#33404A;
+    --band:#22384D; --ok:#6FA8E6; --warn:#E0A54E; --cut:#5E6B75; --father:#E4EAEE;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141A1F; --paper:#1C242B; --ink:#E4EAEE; --sub:#9AA8B3; --rule:#33404A;
+  --band:#22384D; --ok:#6FA8E6; --warn:#E0A54E; --cut:#5E6B75; --father:#E4EAEE;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Meiryo UI","Meiryo","Hiragino Sans","Noto Sans JP",sans-serif;
+  font-size:15px;line-height:1.7}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 48px}
+h1{font-size:1.5rem;margin:0 0 4px;letter-spacing:.02em}
+.q{color:var(--sub);margin:0 0 24px;font-size:.95rem}
+.layout{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+@media (max-width:820px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:18px}
+.panel h2{font-size:1rem;margin:0 0 12px}
+.premise{margin:0 0 16px;padding-bottom:14px;border-bottom:1px dashed var(--rule)}
+.premise:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.premise .name{font-weight:bold;font-size:.92rem}
+.premise .why{color:var(--sub);font-size:.8rem;margin:2px 0 8px;line-height:1.5}
+.pair{display:flex;align-items:center;gap:6px;font-size:.9rem}
+.pair input{width:64px}
+input[type=number]{font:inherit;padding:4px 6px;border:1px solid var(--rule);border-radius:6px;
+  background:var(--bg);color:var(--ink)}
+input:focus-visible,summary:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
+.check{display:flex;gap:6px;align-items:center;font-size:.88rem;margin-top:8px}
+.verdict{background:var(--paper);border:1px solid var(--rule);border-left:6px solid var(--ok);
+  border-radius:10px;padding:16px 18px;margin-bottom:16px}
+.verdict .big{font-size:1.25rem;font-weight:bold;margin:0}
+.verdict .rule{color:var(--sub);font-size:.85rem;margin:6px 0 0}
+.rows{background:var(--paper);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.head,.row summary{display:grid;grid-template-columns:62px 132px 1fr;gap:12px;align-items:center;padding:12px 16px}
+.head{font-size:.8rem;color:var(--sub);border-bottom:1px solid var(--rule)}
+details.row{border-bottom:1px solid var(--rule)}
+details.row:last-child{border-bottom:none}
+.row summary{cursor:pointer;list-style:none}
+.row summary::-webkit-details-marker{display:none}
+.n{font-size:1.35rem;font-weight:bold;text-align:center}
+.n small{font-size:.75rem;font-weight:normal}
+.tag{display:inline-block;font-size:.8rem;font-weight:bold;padding:2px 8px;border-radius:4px;border:1.5px solid currentColor}
+.s-best .tag{background:var(--ok);color:var(--paper);border-color:var(--ok)}
+.s-ok .tag{color:var(--ok)}
+.s-warn .tag{color:var(--warn)}
+.s-cut .tag{color:var(--cut)}
+.s-cut .n,.s-cut .reason{color:var(--cut)}
+.count{font-size:.78rem;color:var(--sub);margin-top:4px}
+.line svg{width:100%;height:46px;display:block}
+.reason{font-size:.85rem;margin-top:2px}
+.ex{font-size:.85rem;font-weight:bold}
+.more{padding:4px 16px 16px 90px;font-size:.85rem}
+@media (max-width:560px){
+  .head{display:none}
+  .row summary{grid-template-columns:52px 1fr}
+  .row summary .line{grid-column:1/-1}
+  .more{padding-left:16px}
+}
+.more ul{margin:6px 0 0;padding-left:1.2em;columns:2;column-gap:28px}
+@media (max-width:560px){.more ul{columns:1}}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:.78rem;color:var(--sub);margin:10px 2px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:4px}
+@media (prefers-reduced-motion:no-preference){ details[open] .more{animation:op .25s ease} @keyframes op{from{opacity:0}to{opacity:1}} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>娘は何人？ 仮説の判定表</h1>
+  <p class="q">「父と娘の年齢の合計は99歳。父は50歳。」娘の人数を仮説として一つずつ置き、左の前提で切っていく。</p>
+
+  <div class="layout">
+    <aside class="panel" aria-label="前提">
+      <h2>前提</h2>
+      <div class="premise">
+        <div class="name">問題文の数字</div>
+        <div class="pair">合計 <input type="number" id="total" value="99" min="1" max="250"> 歳　父 <input type="number" id="father" value="50" min="1" max="120"> 歳</div>
+      </div>
+      <div class="premise">
+        <div class="name">末っ子の年齢</div>
+        <div class="why">問題が低学年向けに見えるので、解いた妹＝末っ子を低学年と置く。</div>
+        <div class="pair"><input type="number" id="yMin" value="7" min="0"> 〜 <input type="number" id="yMax" value="9" min="0"> 歳</div>
+      </div>
+      <div class="premise">
+        <div class="name">父が子どもを持てた年齢</div>
+        <div class="why">長女のときはこれ以上、末っ子のときはこれ以下。</div>
+        <div class="pair"><input type="number" id="fMin" value="22" min="0"> 〜 <input type="number" id="fMax" value="45" min="0"> 歳</div>
+      </div>
+      <div class="premise">
+        <div class="name">自然な姉妹の年の差</div>
+        <div class="why">隣り合う姉妹の差がこの範囲なら「自然」とする。外れても成立はする。</div>
+        <div class="pair"><input type="number" id="gMin" value="1" min="0"> 〜 <input type="number" id="gMax" value="4" min="0"> 歳</div>
+        <label class="check"><input type="checkbox" id="twins"> 双子（同い年）も自然に含める</label>
+      </div>
+    </aside>
+
+    <main>
+      <div class="verdict" id="verdict"><p class="big">…</p></div>
+      <div class="rows" id="rows">
+        <div class="head"><span>人数</span><span>判定</span><span>代表例と理由（数直線は0歳〜父の年齢）</span></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--ok)"></i>娘</span>
+        <span><i style="background:var(--father)"></i>父</span>
+        <span><i style="background:var(--band);border-radius:2px"></i>父が子を持てた範囲に当たる年齢</span>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const ids=["total","father","yMin","yMax","fMin","fMax","gMin","gMax"];
+const NMAX=8;
+
+function read(){
+  const v={};ids.forEach(k=>v[k]=Math.max(0,parseInt($(k).value,10)||0));
+  v.twins=$("twins").checked; v.D=v.total-v.father; return v;
+}
+
+// 姉妹を年上順（非増加）に列挙
+function enumerate(n,v,limit){
+  const emax=v.father-v.fMin, ylow=Math.max(v.yMin,v.father-v.fMax), yhigh=v.yMax;
+  const out=[];let count=0;
+  if(emax<0||ylow>yhigh||v.D<0) return {out,count};
+  (function rec(seq,rem,mx){
+    const k=n-seq.length;
+    if(k===0){ if(rem===0){count++; if(out.length<limit) out.push(seq.slice());} return; }
+    if(rem>k*mx||rem<k*ylow) return;
+    const hi=Math.min(mx,rem-(k-1)*ylow);
+    for(let a=hi;a>=ylow;a--){
+      if(k===1&&a>yhigh) continue;
+      seq.push(a);rec(seq,rem-a,a);seq.pop();
+      if(count>200000) return;
+    }
+  })([],v.D,emax);
+  return {out,count};
+}
+const gaps=s=>s.slice(1).map((a,i)=>s[i]-a);
+const okGap=(g,v)=>(g>=Math.max(1,v.gMin)&&g<=v.gMax)||(v.twins&&g===0);
+const isNatural=(s,v)=>gaps(s).every(g=>okGap(g,v));
+function penalty(s,v){
+  const lo=Math.max(1,v.gMin);
+  return gaps(s).reduce((p,g)=>okGap(g,v)?p:p+(g>v.gMax?g-v.gMax:(lo-g)*2),0);
+}
+const spread=s=>{const g=gaps(s);if(!g.length)return 0;const m=g.reduce((a,b)=>a+b,0)/g.length;return g.reduce((a,b)=>a+(b-m)**2,0);};
+
+function cutReason(n,v){
+  if(v.D<=0) return "合計が父の年齢以下なので、娘の分が残らない。";
+  if(n*v.yMin>v.D) return `娘は全員${v.yMin}歳以上なので、${n}人なら最低${n*v.yMin}歳。娘の合計${v.D}歳に収まらない。`;
+  const eldest=n>1?Math.max(Math.ceil(v.D/n),Math.ceil((v.D-v.yMax)/(n-1))):v.D;
+  if(eldest>v.father-v.fMin) return `${n}人で${v.D}歳を分けると（末っ子は${v.yMax}歳まで）、長女は最低${eldest}歳。父が${v.father-eldest}歳で長女を持ったことになる（${v.fMin}歳以上の前提に反する）。`;
+  const yong=Math.floor(v.D/n);
+  if(yong<Math.max(v.yMin,v.father-v.fMax)) return `末っ子を${Math.max(v.yMin,v.father-v.fMax)}歳以上にすると合計${v.D}歳を超える。`;
+  return `末っ子${v.yMin}〜${v.yMax}歳のまま${n}人で${v.D}歳ちょうどにする組み合わせがない。`;
+}
+function warnReason(s,v){
+  const g=gaps(s).filter(x=>!okGap(x,v)), lo=Math.max(1,v.gMin);
+  if(!g.length) return "年の差の基準から外れる。";
+  const big=Math.max(...g), small=Math.min(...g);
+  if(big>v.gMax) return `いちばん自然に近い形でも、${big}歳の空白がある（基準は${v.gMax}歳まで）。`;
+  if(small<lo) return small===0?"同い年（双子）を入れないと合計が合わない。":`${small}歳差の姉妹が必要（基準は${lo}歳から）。`;
+  return "年の差の基準から外れる。";
+}
+
+function line(s,v){
+  const W=600,H=46,pad=14,F=Math.max(v.father,1);
+  const x=a=>pad+(W-2*pad)*Math.min(a,F)/F;
+  const b0=Math.max(0,v.father-v.fMax), b1=Math.max(0,v.father-v.fMin);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${s?s.join('・')+'歳':''}">`;
+  if(b1>b0) svg+=`<rect x="${x(b0)}" y="12" width="${x(b1)-x(b0)}" height="16" fill="var(--band)" rx="2"/>`;
+  svg+=`<line x1="${pad}" y1="20" x2="${W-pad}" y2="20" stroke="var(--rule)" stroke-width="2"/>`;
+  for(let t=0;t<=F;t+=10) svg+=`<text x="${x(t)}" y="42" font-size="10" fill="var(--sub)" text-anchor="middle">${t}</text>`;
+  svg+=`<circle cx="${x(v.father)}" cy="20" r="6" fill="var(--father)"/>`;
+  if(s){
+    const seen={};
+    s.forEach(a=>{const k=seen[a]=(seen[a]||0)+1;
+      svg+=`<circle cx="${x(a)}" cy="${20-(k-1)*9}" r="5.5" fill="var(--ok)" stroke="var(--paper)" stroke-width="1.5"/>`;});
+  }
+  return svg+"</svg>";
+}
+
+function render(){
+  const v=read(), rows=$("rows");
+  rows.querySelectorAll("details").forEach(d=>d.remove());
+  const res=[];
+  for(let n=1;n<=NMAX;n++){
+    const {out,count}=enumerate(n,v,5000);
+    const nat=out.filter(s=>isNatural(s,v)).sort((a,b)=>spread(a)-spread(b));
+    const natCount=count<=5000?nat.length:null;
+    let status="cut",rep=null,reason="";
+    if(count===0){reason=cutReason(n,v);}
+    else if(nat.length){status="ok";rep=nat[0];reason=`年の差 ${gaps(rep).join('・')||'—'} 歳。父が長女を持ったのは${v.father-rep[0]}歳。`;}
+    else{status="warn";rep=out.slice().sort((a,b)=>penalty(a,v)-penalty(b,v)||spread(a)-spread(b))[0];reason=warnReason(rep,v);}
+    res.push({n,count,nat,natCount,status,rep,reason});
+  }
+  const okRows=res.filter(r=>r.status==="ok");
+  let best=null;
+  if(okRows.length){best=okRows.reduce((a,b)=>b.nat.length>a.nat.length?b:a);best.status="best";}
+
+  const vd=$("verdict");
+  if(best){
+    const others=okRows.filter(r=>r!==best).map(r=>r.n+"人");
+    vd.innerHTML=`<p class="big">結論：娘は ${best.n}人 がもっとも自然（例 ${best.rep.join('・')}歳）</p>
+      <p class="rule">判定の基準：前提をすべて満たし、かつ年の差が自然な組み合わせの数がいちばん多い人数を選ぶ（${best.n}人で${best.nat.length}通り）。${others.length?"ほかに自然な形がある人数："+others.join("、")+"。":"自然な形が出るのはこの人数だけ。"}</p>`;
+    vd.style.borderLeftColor="var(--ok)";
+  }else if(res.some(r=>r.status==="warn")){
+    vd.innerHTML=`<p class="big">結論：成立はするが、どの人数も年の差が不自然</p><p class="rule">「自然な姉妹の年の差」を広げると、候補が浮かび上がる。</p>`;
+    vd.style.borderLeftColor="var(--warn)";
+  }else{
+    vd.innerHTML=`<p class="big">結論：この前提では、どの人数も成立しない</p><p class="rule">末っ子の年齢か、父が子どもを持てた年齢の範囲を広げてみて。</p>`;
+    vd.style.borderLeftColor="var(--cut)";
+  }
+
+  const label={best:"もっとも自然",ok:"自然",warn:"成立・不自然",cut:"不成立"};
+  res.forEach(r=>{
+    const d=document.createElement("details");d.className="row s-"+r.status;
+    const cnt=r.count?`成立 ${r.count>200000?"多数":r.count}通り／自然 ${r.natCount===null?"多数":r.nat.length}通り`:"成立 0通り";
+    d.innerHTML=`<summary>
+      <div class="n">${r.n}<small>人</small></div>
+      <div><span class="tag">${label[r.status]}</span><div class="count">${cnt}</div></div>
+      <div class="line">${r.rep?`<div class="ex">${r.rep.join('・')} 歳</div>`:""}${line(r.rep,v)}<div class="reason">${r.reason}</div></div>
+    </summary>`;
+    const more=document.createElement("div");more.className="more";
+    if(r.nat.length){
+      more.innerHTML=`自然な組み合わせ（年の差がそろっている順、最大20件）<ul>${r.nat.slice(0,20).map(s=>`<li>${s.join('・')}歳</li>`).join("")}</ul>`;
+    }else if(r.count){
+      more.textContent="年の差の基準を満たす組み合わせはない。基準を広げると、ここに候補が並ぶ。";
+    }else{
+      more.textContent="この人数では、前提をすべて満たす組み合わせが一つもない。";
+    }
+    d.appendChild(more);rows.appendChild(d);
+  });
+}
+ids.concat(["twins"]).forEach(k=>$(k).addEventListener("input",render));
+render();
+</script>
+</body>
+</html>
